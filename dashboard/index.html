@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Linux Monitoring Dashboard</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f4f4;
+            padding: 25px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            width: 200px;
+            text-align: center;
+            border-radius: 10px;
+        }
+
+        .value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>My Linux Monitoring Dashboard</h1>
+    <p style="text-align:center">
+        Live server performance
+    </p>
+
+    <div class="container">
+        <div class="card">
+            <h3>CPU Usage</h3>
+            <p class="value" id="cpu">--</p>
+        </div>
+
+        <div class="card">
+            <h3>Memory Usage</h3>
+            <p class="value" id="memory">--</p>
+        </div>
+
+        <div class="card">
+            <h3>Disk Usage</h3>
+            <p class="value" id="disk">--</p>
+        </div>
+
+        <div class="card">
+            <h3>Network Sent</h3>
+            <p class="value" id="sent">--</p>
+        </div>
+
+        <div class="card">
+            <h3>Network Received</h3>
+            <p class="value" id="received">--</p>
+        </div>
+    </div>
+<script>
+    // getting the latest server stats every 5 seconds
+    async function updateStats() {
+        try {
+            const response = await fetch("/stats");
+            const data = await response.json();
+// checking if the server goes over my limits
+const cpuLimit = Number(document.getElementById("cpuLimit").value);
+const memoryLimit = Number(document.getElementById("memoryLimit").value);
+const diskLimit = Number(document.getElementById("diskLimit").value);
+
+let alerts = [];
+
+if (data.cpu > cpuLimit) {
+    alerts.push("CPU usage is too high: " + data.cpu + "%");
+}
+
+if (data.memory > memoryLimit) {
+    alerts.push("Memory usage is too high: " + data.memory + "%");
+}
+
+if (data.disk > diskLimit) {
+    alerts.push("Disk usage is too high: " + data.disk + "%");
+}
+
+// showing any warnings on my dashboard
+document.getElementById("alertMessage").textContent =
+    alerts.join(" | ");
+            document.getElementById("cpu").textContent =
+                data.cpu + "%";
+
+            document.getElementById("memory").textContent =
+                data.memory + "%";
+
+            document.getElementById("disk").textContent =
+                data.disk + "%";
+
+            document.getElementById("sent").textContent =
+                (data.network_sent / 1048576).toFixed(2) + " MB";
+
+            document.getElementById("received").textContent =
+                (data.network_received / 1048576).toFixed(2) + " MB";
+
+        } catch (error) {
+            console.log("Could not get server stats");
+        }
+    }
+
+    // update the dashboard automatically
+    updateStats();
+    setInterval(updateStats, 5000);
+
+// getting my past cpu readings
+async function updateCpuChart() {
+    try {
+        const response = await fetch("/history");
+        const readings = await response.json();
+
+        const canvas = document.getElementById("cpuChart");
+        const ctx = canvas.getContext("2d");
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // drawing the chart axes
+        ctx.strokeStyle = "gray";
+        ctx.beginPath();
+        ctx.moveTo(40, 10);
+        ctx.lineTo(40, 260);
+        ctx.lineTo(780, 260);
+        ctx.stroke();
+
+        // drawing the cpu line
+        ctx.strokeStyle = "blue";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        readings.forEach((reading, index) => {
+            const x = 40 + index * (740 / Math.max(readings.length - 1, 1));
+            const y = 260 - reading.cpu * 2.5;
+
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+
+        ctx.stroke();
+
+    } catch (error) {
+        console.log("Could not load CPU history");
+    }
+}
+
+// updating the chart every 5 seconds
+updateCpuChart();
+setInterval(updateCpuChart, 5000);
+
+// getting my past memory readings
+async function updateMemoryChart() {
+    try {
+        const response = await fetch("/history");
+        const readings = await response.json();
+
+        const canvas = document.getElementById("memoryChart");
+        const ctx = canvas.getContext("2d");
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // drawing the chart axes
+        ctx.strokeStyle = "gray";
+        ctx.beginPath();
+        ctx.moveTo(40, 10);
+        ctx.lineTo(40, 260);
+        ctx.lineTo(780, 260);
+        ctx.stroke();
+
+        // drawing memory usage
+        ctx.strokeStyle = "green";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        readings.forEach((reading, index) => {
+            const x = 40 + index * (740 / Math.max(readings.length - 1, 1));
+            const y = 260 - reading.memory * 2.5;
+
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+
+        ctx.stroke();
+
+    } catch (error) {
+        console.log("Could not load memory history");
+    }
+}
+
+// updating the memory chart every 5 seconds
+updateMemoryChart();
+setInterval(updateMemoryChart, 5000);
+
+// getting my past disk readings
+async function updateDiskChart() {
+    try {
+        const response = await fetch("/history");
+        const readings = await response.json();
+
+        const canvas = document.getElementById("diskChart");
+        const ctx = canvas.getContext("2d");
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // drawing the chart axes
+        ctx.strokeStyle = "gray";
+        ctx.beginPath();
+        ctx.moveTo(40, 10);
+        ctx.lineTo(40, 260);
+        ctx.lineTo(780, 260);
+        ctx.stroke();
+
+        // drawing disk usage
+        ctx.strokeStyle = "orange";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        readings.forEach((reading, index) => {
+            const x = 40 + index * (740 / Math.max(readings.length - 1, 1));
+            const y = 260 - reading.disk * 2.5;
+
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+
+        ctx.stroke();
+
+    } catch (error) {
+        console.log("Could not load disk history");
+    }
+}
+
+// updating the disk chart every 5 seconds
+updateDiskChart();
+setInterval(updateDiskChart, 5000);
+
+// drawing my network history charts
+async function updateNetworkCharts() {
+    try {
+        const response = await fetch("/history");
+        const readings = await response.json();
+
+        drawNetworkChart("sentChart", readings, "network_sent", "purple");
+        drawNetworkChart("receivedChart", readings, "network_received", "red");
+
+    } catch (error) {
+        console.log("Could not load network history");
+    }
+}
+
+function drawNetworkChart(chartId, readings, metric, color) {
+    const canvas = document.getElementById(chartId);
+    const ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // drawing the chart axes
+    ctx.strokeStyle = "gray";
+    ctx.beginPath();
+    ctx.moveTo(40, 10);
+    ctx.lineTo(40, 260);
+    ctx.lineTo(780, 260);
+    ctx.stroke();
+
+    // using the lowest and highest values to fit the graph
+    const values = readings.map(reading => reading[metric] / 1048576);
+    if (values.length === 0) return;
+
+    const lowest = Math.min(...values);
+    const highest = Math.max(...values);
+    const range = Math.max(highest - lowest, 0.01);
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    values.forEach((value, index) => {
+        const x = 40 + index * (740 / Math.max(values.length - 1, 1));
+        const y = 260 - ((value - lowest) / range) * 240;
+
+        if (index === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    });
+
+    ctx.stroke();
+}
+
+// updating both network charts every 5 seconds
+updateNetworkCharts();
+setInterval(updateNetworkCharts, 5000);
+
+</script>
+
+<h2 style="text-align:center">CPU Usage History</h2>
+
+<div style="background:white; padding:20px; border-radius:10px; max-width:800px; margin:20px auto;">
+    <canvas id="cpuChart" width="800" height="300"></canvas>
+</div>
+
+<h2 style="text-align:center">Memory Usage History</h2>
+
+<div style="background:white; padding:20px; border-radius:10px; max-width:800px; margin:20px auto;">
+    <canvas id="memoryChart" width="800" height="300"></canvas>
+</div>
+
+<h2 style="text-align:center">Disk Usage History</h2>
+
+<div style="background:white; padding:20px; border-radius:10px; max-width:800px; margin:20px auto;">
+    <canvas id="diskChart" width="800" height="300"></canvas>
+</div>
+
+<h2 style="text-align:center">Network Sent History</h2>
+<div style="background:white; padding:20px; border-radius:10px; max-width:800px; margin:20px auto;">
+    <canvas id="sentChart" width="800" height="300"></canvas>
+</div>
+
+<h2 style="text-align:center">Network Received History</h2>
+<div style="background:white; padding:20px; border-radius:10px; max-width:800px; margin:20px auto;">
+    <canvas id="receivedChart" width="800" height="300"></canvas>
+</div>
+
+<h2 style="text-align:center">Performance Alerts</h2>
+
+<div style="background:white; padding:20px; border-radius:10px; max-width:800px; margin:20px auto; text-align:center;">
+
+    <p>Set the usage percentage that should trigger an alert.</p>
+
+    <label>CPU Limit (%):
+        <input type="number" id="cpuLimit" value="80" min="0" max="100">
+    </label>
+
+    <br><br>
+
+    <label>Memory Limit (%):
+        <input type="number" id="memoryLimit" value="80" min="0" max="100">
+    </label>
+
+    <br><br>
+
+    <label>Disk Limit (%):
+        <input type="number" id="diskLimit" value="90" min="0" max="100">
+    </label>
+
+    <br><br>
+
+    <p id="alertMessage" style="color:red; font-weight:bold;"></p>
+</div>
+
+</body>
+</html>
+

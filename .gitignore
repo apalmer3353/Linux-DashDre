@@ -1,0 +1,11 @@
+# saved monitoring data
+data/
+*.jsonl
+
+# python temporary files
+__pycache__/
+*.pyc
+
+# local environment files
+.env
+.venv/
