@@ -1,0 +1,15 @@
+[Unit]
+Description=API for my Linux monitoring dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=dashboard-agent
+Group=dashboard-agent
+WorkingDirectory=/home/dre997005/linux-dashboard/agent
+ExecStart=/usr/bin/python3 /home/dre997005/linux-dashboard/agent/api.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

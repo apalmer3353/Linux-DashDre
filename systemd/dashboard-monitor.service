@@ -1,0 +1,15 @@
+[Unit]
+Description=Monitoring agent for my dashboard
+After=dashboard-api.service
+Requires=dashboard-api.service
+
+[Service]
+Type=simple
+User=dashboard-agent
+Group=dashboard-agent
+ExecStart=/usr/bin/python3 /home/dre997005/linux-dashboard/agent/monitor.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=Stress testing for my Linux dashboard
+After=network.target
+
+[Service]
+Type=notify
+NotifyAccess=all
+ExecStart=/home/dre997005/linux-dashboard/stress/stress_test.sh
+Restart=always
+RestartSec=5
+WatchdogSec=120
+
+[Install]
+WantedBy=multi-user.target
