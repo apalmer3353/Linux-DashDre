@@ -1,0 +1,1 @@
+*/5 * * * * /home/dre997005/linux-dashboard/scripts/health_check.sh
